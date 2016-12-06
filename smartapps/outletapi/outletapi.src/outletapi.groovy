@@ -42,7 +42,13 @@ mappings {
       PUT: "updateSwitches"
     ]
   }
+  path("/hubstatus"){
+  	action: [
+    	GET: "hubStatus"
+    ]
+  }
 }
+
 def installed() {
 	log.debug "Installed with settings: ${settings}"
 
@@ -61,6 +67,15 @@ def initialize() {
 }
 
 // TODO: implement event handlers
+// returns hub status
+def hubStatus() {
+	def resp = []
+    switches.each {
+      resp << [name: it.displayName, hubip: it.hub.localIP, value: it.latestValue("switch")]
+    }
+    return resp
+}
+
 
 // returns a list like
 // [[name: "kitchen lamp", value: "off"], [name: "bathroom", value: "on"]]
@@ -72,9 +87,10 @@ def listSwitches() {
     return resp
 }
 
-void updateSwitches() {
+def updateSwitches() {
     // use the built-in request object to get the command parameter
     def command = params.command
+    def resp = []
 
     // all switches have the command
     // execute the command on all switches
@@ -82,9 +98,16 @@ void updateSwitches() {
     switch(command) {
         case "on":
             switches.on()
+            switches.each {
+              resp << [name: it.displayName, value: it.currentValue("switch")]
+            }
+            return resp
             break
         case "off":
             switches.off()
+            switches.each {
+              resp << [name: it.displayName, value: it.currentValue("switch")]
+            }
             break
         default:
             httpError(400, "$command is not a valid command for all switches specified")

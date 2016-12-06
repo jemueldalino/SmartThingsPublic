@@ -42,6 +42,11 @@ mappings {
       PUT: "updateLocks"
     ]
   }
+  path("/hublocalip"){
+  	action: [
+   	  GET: "hubLocalIp"
+    ]
+  }
 }
 
 def installed() {
@@ -62,6 +67,10 @@ def initialize() {
 }
 
 // TODO: implement event handlers
+// returns hub status
+def hubLocalIp() {
+    return [localip: switches[0].hub.localIP]
+}
 
 // returns a list like
 // [[name: "kitchen lamp", value: "off"], [name: "bathroom", value: "on"]]
@@ -76,7 +85,7 @@ def listLocks() {
 void updateLocks() {
     // use the built-in request object to get the command parameter
     def command = params.command
-	log.debug "params: ${params}"
+    def resp = []
     
     // all locks have the command
     // execute the command on all locks
@@ -85,10 +94,16 @@ void updateLocks() {
         case "on":
         	log.debug "On!" 
             switches.unlock()
+            switches.each {
+              resp << [name: it.displayName, value: it.currentValue("lock")]
+            }
             break
         case "off":
             log.debug "Off!"
             switches.lock()
+            switches.each {
+              resp << [name: it.displayName, value: it.currentValue("lock")]
+            }
             break
         default:
             httpError(400, "$command is not a valid command for all switches specified")
