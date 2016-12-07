@@ -27,7 +27,7 @@ definition(
 
 preferences {
 	section ("Allow external service to control these things...") {
-    input "switches", "capability.doorControl", multiple: true, required: true
+    input "switches", "capability.contactSensor", multiple: true, required: true
   }
 }
 
@@ -37,11 +37,7 @@ mappings {
       GET: "listSensors"
     ]
   }
-  path("/switches/:command") {
-    action: [
-      PUT: "updateSensors"
-    ]
-  }
+  
   path("/hublocalip"){
   	action: [
    	  GET: "hubLocalIp"
@@ -73,39 +69,12 @@ def hubLocalIp() {
 }
 
 // returns a list like
-// [[name: "kitchen lamp", value: "off"], [name: "bathroom", value: "on"]]
+// [[name: "kitchen lamp", value: "open"], [name: "bathroom", value: "closed"]]
 def listSensors() {
     def resp = []
     switches.each {
-      resp << [name: it.displayName, value: it.currentValue("door")]
+      resp << [name: it.displayName, value: it.currentValue("contact")]
     }
     return resp
 }
 
-void updateSensors() {
-    // use the built-in request object to get the command parameter
-    def command = params.command
-    def resp = []
-    
-    // all locks have the command
-    // execute the command on all locks
-    // (note we can do this on the array - the command will be invoked on every element'
-    switch(command) {
-        case "on":
-        	log.debug "On!" 
-            switches.open()
-            switches.each {
-              resp << [name: it.displayName, value: it.currentValue("door")]
-            }
-            break
-        case "off":
-            log.debug "Off!"
-            switches.close()
-            switches.each {
-              resp << [name: it.displayName, value: it.currentValue("door")]
-            }
-            break
-        default:
-            httpError(400, "$command is not a valid command for all switches specified")
-    }
-}
