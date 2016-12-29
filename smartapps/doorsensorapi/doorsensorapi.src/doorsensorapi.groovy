@@ -1,3 +1,5 @@
+include 'asynchttp_v1'
+
 /**
  *  DoorSensorAPI
  *
@@ -43,6 +45,18 @@ mappings {
    	  GET: "hubLocalIp"
     ]
   }
+  
+  path("/open"){
+  	action: [
+   	  GET: "open"
+    ]
+  }
+  
+  path("/close"){
+  	action: [
+   	  GET: "close"
+    ]
+  }
 }
 
 def installed() {
@@ -59,13 +73,50 @@ def updated() {
 }
 
 def initialize() {
-	// TODO: subscribe to attributes, devices, locations, etc.
+	// subscribe to attributes, devices, locations, etc.
+    subscribe(switches, "contact.open", contactSensorOpenHandler)
+    subscribe(switches, "contact.closed", contactSensorClosedHandler)
 }
 
-// TODO: implement event handlers
+// implement event handlers
+def contactSensorOpenHandler(evt) {
+    log.debug "sensor open!"
+    open()
+}
+
+def contactSensorClosedHandler(evt) {
+    log.debug "sensor closed!"
+    close()
+}
+
 // returns hub status
 def hubLocalIp() {
     return [localip: switches[0].hub.localIP]
+}
+
+def open() {
+	log.debug "sensor open!"
+    def resp = []
+    def appSettings = app.getAppSettings()
+    log.debug appSettings
+    
+    def params = [
+        uri: 'https://api.github.com',
+        path: '/search/code',
+        query: [q: "httpGet+repo:SmartThingsCommunity/SmartThingsPublic"]
+    ]
+    asynchttp_v1.get(processResponse, params)
+}
+
+def close() {
+	log.debug "sensor closed!"
+    
+    def params = [
+        uri: 'https://api.github.com',
+        path: '/search/code',
+        query: [q: "httpGet+repo:SmartThingsCommunity/SmartThingsPublic"]
+    ]
+    asynchttp_v1.get(processResponse, params)
 }
 
 // returns a list like
@@ -78,3 +129,26 @@ def listSensors() {
     return resp
 }
 
+def processResponse(response, data) {
+    if (response.hasError()) {
+        log.error "response has error: $response.errorMessage"
+    } else {
+        def results
+        try {
+            // json response already parsed into JSONElement object
+            results = response.json
+        } catch (e) {
+            log.error "error parsing json from response: $e"
+        }
+        if (results) {
+            def total = results?.total_count
+
+            log.debug "there are $total occurences of httpGet in the SmartThingsPublic repo"
+
+            // for each item found, log the name of the file
+            results?.items.each { log.debug "httpGet usage found in file $it.name" }
+        } else {
+            log.debug "did not get json results from response body: $response.data"
+        }
+    }
+}

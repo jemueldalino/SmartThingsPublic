@@ -75,7 +75,7 @@ def hubLocalIp() {
 // returns a list like
 // [[name: "kitchen lamp", value: "off"], [name: "bathroom", value: "on"]]
 def listLocks() {
-    def resp = []
+	def resp = []
     switches.each {
       resp << [name: it.displayName, value: it.currentValue("lock")]
     }
