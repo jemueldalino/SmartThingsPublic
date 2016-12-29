@@ -25,6 +25,10 @@ definition(
     iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png",
     iconX3Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png",
     oauth: true)
+    {
+    
+    appSetting "PodId"
+}
 
 
 preferences {
@@ -96,27 +100,24 @@ def hubLocalIp() {
 
 def open() {
 	log.debug "sensor open!"
-    def resp = []
-    def appSettings = app.getAppSettings()
-    log.debug appSettings
     
     def params = [
-        uri: 'https://api.github.com',
-        path: '/search/code',
-        query: [q: "httpGet+repo:SmartThingsCommunity/SmartThingsPublic"]
+        uri: 'http://api.napinpod.com',
+        path: 'api/podstatuses/editpoddevicestatus',
+        body: [Id: appSettings.PodId, DeviceTypeCode: "Sensors", DeviceStatusCode: "Open"]
     ]
-    asynchttp_v1.get(processResponse, params)
+    asynchttp_v1.post(processResponse, params)
 }
 
 def close() {
 	log.debug "sensor closed!"
     
     def params = [
-        uri: 'https://api.github.com',
-        path: '/search/code',
-        query: [q: "httpGet+repo:SmartThingsCommunity/SmartThingsPublic"]
+        uri: 'http://api.napinpod.com',
+        path: 'api/podstatuses/editpoddevicestatus',
+        body: [Id: appSettings.PodId, DeviceTypeCode: "Sensors", DeviceStatusCode: "Closed"]
     ]
-    asynchttp_v1.get(processResponse, params)
+    asynchttp_v1.post(processResponse, params)
 }
 
 // returns a list like
