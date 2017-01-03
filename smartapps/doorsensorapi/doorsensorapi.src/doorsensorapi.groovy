@@ -84,13 +84,12 @@ def initialize() {
 
 // implement event handlers
 def contactSensorOpenHandler(evt) {
-    log.debug "sensor open!"
     open()
 }
 
 def contactSensorClosedHandler(evt) {
-    log.debug "sensor closed!"
     close()
+    lockDoor()
 }
 
 // returns hub status
@@ -103,7 +102,7 @@ def open() {
     
     def params = [
         uri: 'http://api.napinpod.com',
-        path: 'api/podstatuses/editpoddevicestatus',
+        path: '/api/podstatuses/editpoddevicestatus',
         body: [Id: appSettings.PodId, DeviceTypeCode: "Sensors", DeviceStatusCode: "Open"]
     ]
     asynchttp_v1.post(processResponse, params)
@@ -114,8 +113,44 @@ def close() {
     
     def params = [
         uri: 'http://api.napinpod.com',
-        path: 'api/podstatuses/editpoddevicestatus',
+        path: '/api/podstatuses/editpoddevicestatus',
         body: [Id: appSettings.PodId, DeviceTypeCode: "Sensors", DeviceStatusCode: "Closed"]
+    ]
+    asynchttp_v1.post(processResponse, params)
+}
+
+def lockDoor() {
+    log.debug "send signal to lock door!"
+    
+    try{
+    	httpPost("http://api.napinpod.com/api/pods/lock?id="+appSettings.PodId, "") {response ->
+            def status = response.status
+
+                switch (status) {
+                    case 200:
+                        log.debug "200 returned"
+                        locked()
+                        break
+                    case 304:
+                        log.debug "304 returned"
+                        break
+                    default:
+                        log.warn "no handling for response with status $status"
+                        break
+                }
+        }
+    } catch(e){
+    	log.error "something went wrong: $e"
+    }
+}
+
+def locked() {
+	log.debug "send signal to update lock status"
+    
+    def params = [
+        uri: 'http://api.napinpod.com',
+        path: '/api/podstatuses/editpoddevicestatus',
+        body: [Id: appSettings.PodId, DeviceTypeCode: "Locks", DeviceStatusCode: "Locked"]
     ]
     asynchttp_v1.post(processResponse, params)
 }
@@ -134,22 +169,18 @@ def processResponse(response, data) {
     if (response.hasError()) {
         log.error "response has error: $response.errorMessage"
     } else {
-        def results
-        try {
-            // json response already parsed into JSONElement object
-            results = response.json
-        } catch (e) {
-            log.error "error parsing json from response: $e"
-        }
-        if (results) {
-            def total = results?.total_count
-
-            log.debug "there are $total occurences of httpGet in the SmartThingsPublic repo"
-
-            // for each item found, log the name of the file
-            results?.items.each { log.debug "httpGet usage found in file $it.name" }
-        } else {
-            log.debug "did not get json results from response body: $response.data"
+        def status = response.status
+        
+        switch (status) {
+            case 200:
+                log.debug "200 returned"
+                break
+            case 304:
+                log.debug "304 returned"
+                break
+            default:
+                log.warn "no handling for response with status $status"
+                break
         }
     }
 }
