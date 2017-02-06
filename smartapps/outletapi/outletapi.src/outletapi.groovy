@@ -39,7 +39,7 @@ mappings {
   }
   path("/switches/:command") {
     action: [
-      PUT: "updateSwitches"
+      POST: "updateSwitches"
     ]
   }
   path("/hubstatus"){
@@ -82,7 +82,7 @@ def hubStatus() {
 def listSwitches() {
     def resp = []
     switches.each {
-      resp << [name: it.displayName, value: it.currentValue("switch")]
+      resp << [Id: appSettings.PodId, DeviceTypeCode: "Outlets", DeviceStatusCode: it.currentValue("switch")]
     }
     return resp
 }
@@ -99,14 +99,14 @@ def updateSwitches() {
         case "on":
             switches.on()
             switches.each {
-              resp << [name: it.displayName, value: it.currentValue("switch")]
+              resp << [Id: appSettings.PodId, DeviceTypeCode: "Outlets", DeviceStatusCode: it.currentValue("switch")]
             }
             return resp
             break
         case "off":
             switches.off()
             switches.each {
-              resp << [name: it.displayName, value: it.currentValue("switch")]
+              resp << [Id: appSettings.PodId, DeviceTypeCode: "Outlets", DeviceStatusCode: it.currentValue("switch")]
             }
             break
         default:

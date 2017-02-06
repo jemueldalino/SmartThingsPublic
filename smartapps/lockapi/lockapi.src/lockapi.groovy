@@ -39,7 +39,7 @@ mappings {
   }
   path("/switches/:command") {
     action: [
-      PUT: "updateLocks"
+      POST: "updateLocks"
     ]
   }
   path("/hublocalip"){
@@ -77,12 +77,12 @@ def hubLocalIp() {
 def listLocks() {
 	def resp = []
     switches.each {
-      resp << [name: it.displayName, value: it.currentValue("lock")]
+      resp <<[Id: appSettings.PodId, DeviceTypeCode: "Locks", DeviceStatusCode: it.currentValue("lock")]
     }
     return resp
 }
 
-void updateLocks() {
+def updateLocks() {
     // use the built-in request object to get the command parameter
     def command = params.command
     def resp = []
@@ -95,17 +95,19 @@ void updateLocks() {
         	log.debug "On!" 
             switches.unlock()
             switches.each {
-              resp << [name: it.displayName, value: it.currentValue("lock")]
+              resp << [Id: appSettings.PodId, DeviceTypeCode: "Locks", DeviceStatusCode: it.currentValue("lock")]
             }
             break
         case "off":
             log.debug "Off!"
             switches.lock()
             switches.each {
-              resp << [name: it.displayName, value: it.currentValue("lock")]
+              resp << [Id: appSettings.PodId, DeviceTypeCode: "Locks", DeviceStatusCode: it.currentValue("lock")]
             }
             break
         default:
             httpError(400, "$command is not a valid command for all switches specified")
     }
+    log.debug resp
+    return resp
 }

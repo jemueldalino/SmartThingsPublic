@@ -160,7 +160,7 @@ def locked() {
 def listSensors() {
     def resp = []
     switches.each {
-      resp << [name: it.displayName, value: it.currentValue("contact")]
+      resp << [Id: appSettings.PodId, DeviceTypeCode: "Sensors", DeviceStatusCode: it.currentValue("contact")]
     }
     return resp
 }
