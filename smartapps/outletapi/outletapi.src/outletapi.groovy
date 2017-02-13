@@ -112,4 +112,6 @@ def updateSwitches() {
         default:
             httpError(400, "$command is not a valid command for all switches specified")
     }
+    log.debug resp
+    return resp
 }
