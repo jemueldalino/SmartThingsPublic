@@ -89,7 +89,8 @@ def contactSensorOpenHandler(evt) {
 
 def contactSensorClosedHandler(evt) {
     close()
-    lockDoor()
+    log.debug "Run after 8 seconds"
+    runIn(8, lockDoor)
 }
 
 // returns hub status

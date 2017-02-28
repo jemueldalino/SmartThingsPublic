@@ -95,14 +95,14 @@ def updateLocks() {
         	log.debug "On!" 
             switches.unlock()
             switches.each {
-              resp << [Id: appSettings.PodId, DeviceTypeCode: "Locks", DeviceStatusCode: it.currentValue("lock")]
+              resp << [Id: appSettings.PodId, DeviceTypeCode: "Locks", DeviceStatusCode: "Unlocked"]
             }
             break
         case "off":
             log.debug "Off!"
             switches.lock()
             switches.each {
-              resp << [Id: appSettings.PodId, DeviceTypeCode: "Locks", DeviceStatusCode: it.currentValue("lock")]
+              resp << [Id: appSettings.PodId, DeviceTypeCode: "Locks", DeviceStatusCode: "Locked"]
             }
             break
         default:
